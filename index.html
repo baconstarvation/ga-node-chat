@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang='en'>
+ 
+  <head>
+    <title>Chat</title>
+    <style type="text/css">
+      body {
+      font-family: 'Helvetica Neue', 'Helvetica', helvetica, Arial, sans-serif;
+      }
+      #container {
+      margin: 60px auto;
+      width: 844px;
+      }
+      h1 {
+      text-align: center;
+      }
+      li.me {
+      color:red;
+      }
+      #message-container {
+      float: left;
+      }
+      #messages {
+      width:  460px;
+      height: 360px;
+      border: 1px solid #ccc;
+      margin: 0 10px;
+      padding: 20px;
+      }
+      #sidebar {
+      float: left;
+      width: 260px;
+      border: 1px solid #ccc;
+      margin: 0 10px;
+      padding: 0 20px;
+      }
+      #bottom {
+      width: 500px;
+      }
+      .username {
+      padding: 10px;
+      }
+      .me .username {
+      color: red;
+      }
+      .you .username {
+      color: blue;
+      }
+      .msg {
+      margin: 10px 0;
+      }
+      .username {
+      font-weight: bold;
+      }
+      #message {
+      padding: 5px;
+      width: 300px;
+      margin: 20px;
+      }
+      #send-message {
+      font-weight: bold;
+      font-size: 20px;
+      }
+    </style>
+  </head>
+ 
+  <body>
+ 
+    <div id="container">
+ 
+      <header>
+        <h1>Chat Room</h1>
+      </header>
+ 
+      <div id="main">
+ 
+        <div id="message-container">
+          <div id="messages">
+          </div>
+          <div id="bottom">
+            <input id="message" type="text">
+            <input type="button" id="send-message" value="send">
+          </div>
+        </div>
+ 
+        <div id="sidebar">
+          <h2>Users</h2>
+          <ul id="users">
+          </ul>
+        </div>
+ 
+      </div>
+ 
+ 
+    </div>
+ 
+    <script src='/socket.io/socket.io.js' type='text/javascript'></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script type="text/javascript">
+ 
+        var socket = io.connect('http://localhost:8080');
+        var username;
+        socket.on('connect', function() {
+            username = prompt('Enter a username');
+            socket.emit('newUser', username);
+        });
+ 
+        socket.on('newMessage', function(sender, message) {
+            var classnames = (sender === username)? "me" : "you";
+            var msg = '<div class="msg ' + classnames + '">'
+                + '<span class="username">' + sender + '</span>'
+                + '<span class="msg-text">' + message + '</span>'
+                + '</div>';
+            $('#messages').append(msg);
+        });
+ 
+        socket.on('updateUsers', function(users) {
+            $('#users').empty();
+            $.each(users, function(key, value) {
+                var cls = (key === username)? 'me' : 'you';
+                $('#users').append('<li class="' + cls + '">' + key + '</li>');
+            });
+        });
+ 
+        $(function() {
+            $('#send-message').click(function() {
+                var message = $('#message').val();
+                $('#message').val('');
+ 
+                socket.emit('message', message);
+            });
+ 
+            $('#message').keypress(function(e) {
+                if (e.which == 13) {
+                    $(this).blur();
+                    $('#send-message').focus().click();
+                }
+            });
+        });
+    </script>
+ 
+  </body>
+</html>
